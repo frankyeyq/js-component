@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title></title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <style>
+            *{
+                margin: 0;
+                padding: 0;
+            }
+            .pagination{
+                display: flex;
+            }
+            .pagination .btn-prev{
+
+            }
+            .pagination .btn-next{
+                
+            }
+            .pagination .pageNumber{
+                display: flex;
+            }
+            .pagination .pageNumber li{
+                width: 34px;
+                box-sizing: border-box;
+                padding: 5px 10px;
+                border: 1px solid #ececec;
+                border-radius: 4px;
+                margin-right: 5px;
+                user-select: none;
+                cursor: pointer;
+            }
+            .pagination .pageNumber li.active{
+                background: #dadada;
+            }
+            ol{
+                list-style: none;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="pagination">
+            <!-- <button type="button" class="btn-prev">上一页</button>
+            <ol class="pageNumber">
+                <li>1</li>
+                <li>2</li>
+                <li>3</li>
+                <li>4</li>
+            </ol>
+            <button type="button" class="btn-next">下一页</button> -->
+        </div>
+        <script>
+            function Pager (opts) {
+                this.currentPage = opts.currentPage || 1;
+                this.totalPage = opts.totalPage;
+                this.element = opts.element;
+                this.buttonCount = 6;
+                this.maxNumberButton = 6;
+                this.getCurrentPage = opts.getCurrentPage
+                this.template = {
+                    prev: '<button type="button" class="btn-prev">上一页</button>',
+                    number: '<li>${pageNumber}</li>',
+                    next: '<button type="button" class="btn-next">下一页</button>'
+                }
+                this.initHtml();
+                this.bindFuncion();
+            }
+            Pager.prototype.render = function (templateString, dataObject) {
+                with(dataObject) {
+                    return eval('`' + templateString + '`');
+                }
+            }
+            Pager.prototype.initHtml = function () {
+                if (!this.element) {
+                    throw new Error('Element is required');
+                    return ;
+                }
+                if (!this.isDOMElement(this.element)) {
+                    throw new Error('This is not an Element Object');
+                    return ;
+                }
+                let prev = this.template.prev;
+                let next = this.template.next;
+                let temp = document.createElement('template');
+                let numbers = this.renderNumbers();
+                temp.innerHTML = prev + '<ol class="pageNumber">' + numbers + '</ol>' + next;
+                this.element.appendChild(temp.content);
+                document.querySelectorAll('.pageNumber li')[0].className = 'active';
+                if (this.currentPage === this.totalPage) {
+                    document.querySelector('.btn-next').setAttribute('disabled', true);
+                }
+                if (this.currentPage === 1) {
+                    document.querySelector('.btn-prev').setAttribute('disabled', true);
+                }
+            }
+            Pager.prototype.isDOMElement = function (obj) {
+                return obj instanceof HTMLElement;
+            }
+            Pager.prototype.renderNumbers = function () {
+                let lis = '';
+                // let totalPage = this.totalPage
+                // let currentPage = this.currentPage
+                // console.log(currentPage);
+                // let buttonCount = this.buttonCount
+                // let start1 = Math.max(currentPage - Math.round(buttonCount / 2), 1)
+                // let end1 = Math.min(start1 + buttonCount - 1, totalPage)
+                // let end2 = Math.min(currentPage + Math.round(buttonCount / 2) - 1, totalPage)
+                // let start2 = Math.max(end2 - buttonCount + 1, 1)
+                // let start = Math.min(start1, start2)
+                // let end = Math.max(end1, end2)
+                let start, end;
+                if (this.buttonCount >= this.totalPage) {
+                    start = 1;
+                    end = this.totalPage;
+                } else {
+                    if (this.currentPage <= this.buttonCount / 2) {
+                        start = 1;
+                        end = this.buttonCount;
+                    } else if(this.totalPage - this.currentPage < this.buttonCount / 2 ) {
+                        end = this.totalPage;
+                        start = this.totalPage - this.buttonCount + 1;
+                    } else {
+                        start = this.currentPage - this.buttonCount / 2;
+                        end = this.currentPage + this.buttonCount / 2 -1
+                    }
+                }
+                for (let i = start; i<=end; i++) {
+                    lis += this.render(this.template.number, {pageNumber: i});
+                }
+                return lis;
+            }
+            Pager.prototype.bindFuncion = function () {
+                let that = this;
+                document.querySelector('.btn-next').addEventListener('click', function() {
+                    that.next();
+                })
+                document.querySelector('.btn-prev').addEventListener('click', function() {
+                    that.prev();
+                })
+                document.querySelector('.pageNumber').addEventListener('click', function(e) {
+                    if (e.target.nodeName !== 'LI') return;
+                    if (e.target.classList.contains('active')) return;
+                    that.currentPage = parseInt(e.target.innerHTML);
+                    that.goPage();
+                })
+            }
+            Pager.prototype.goPage = function (pageNumber) {
+                if (this.currentPage === this.totalPage) {
+                    document.querySelector('.btn-next').setAttribute('disabled', true);
+                } else {
+                    document.querySelector('.btn-next').removeAttribute('disabled');
+                }
+                if (this.currentPage === 1) {
+                    document.querySelector('.btn-prev').setAttribute('disabled', true);
+                } else {
+                    document.querySelector('.btn-prev').removeAttribute('disabled');
+                }
+                removeClass(document.querySelectorAll('.pageNumber li'), 'active');
+                let lis = this.renderNumbers();
+                document.querySelector('.pageNumber').innerHTML = lis;
+                document.querySelectorAll('.pageNumber li').forEach(item =>{
+                    if (item.innerHTML == this.currentPage) {
+                        item.classList.add('active');
+                    }
+                })
+                this.getCurrentPage(this.currentPage);
+                // e.target.classList.add('active');
+            }
+            Pager.prototype.next = function () {
+                if (this.currentPage === this.totalPage) {
+                    return ;
+                }
+                this.currentPage++;
+                this.goPage();
+            }
+            Pager.prototype.prev = function () {
+                if (this.currentPage === 1) {
+                    return ;
+                }
+                this.currentPage--;
+                this.goPage();
+            }
+            function removeClass(elements, className) {
+                if (elements.length > 0) {
+                    elements.forEach(item => {
+                        item.classList.remove(className);
+                    })
+                } else {
+                    elements.classList.remove(className);
+                }
+            }
+        </script>
+        <script>
+            let pager = new Pager({
+                element: document.querySelector('.pagination'),
+                totalPage: 12,
+                getCurrentPage: function(current) {
+                    console.log(current);
+                }
+            })
+        </script>
+    </body>
+</html>
